@@ -1,6 +1,8 @@
 let arrayCircles = [];
 let speedCircles = 0.01;
 let maxRadius = 300;
+let centerX = innerWidth / 2;
+let centerY = innerHeight / 2;
 
 class Circle {
   constructor(t, a, r){
@@ -22,7 +24,7 @@ class Circle {
 }
 
 function setup() {
-  createCanvas(innerWidth,innerHeight);
+  createCanvas(innerWidth, innerHeight);
   noFill();
   strokeWeight(3);
   stroke(255);
@@ -31,7 +33,7 @@ function setup() {
 function update(){
   for(let i = arrayCircles.length - 1; i >= 0; i--) {
     let obj = arrayCircles[i];
-    obj.update(innerWidth/2, innerHeight/2);
+    obj.update(centerX, centerY);
     if (obj.t >= 1) {
       arrayCircles.splice(i, 1);
     }
@@ -41,8 +43,8 @@ function update(){
 function draw() {
   update();
   background(0);
-  circle(innerWidth / 2, innerHeight / 2, 600);
-  circle(innerWidth / 2, innerHeight / 2, 10);
+  circle(centerX, centerY, 600);
+  circle(centerX, centerY, 10);
   for(obj of arrayCircles){
     obj.draw();
   }
