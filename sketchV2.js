@@ -13,10 +13,10 @@ class Circle {
     this.angle = a;
     this.radius = r;
     this.color = c;
-    this.sliceIndex = sliceIndex; // Assign slice index to each ball
+    this.sliceIndex = sliceIndex;
     this.x = 0;
     this.y = 0;
-    this.awardedPoint = false; // Property to track if the ball has already awarded a point
+    this.awardedPoint = false;
   }
   update(cX, cY){
     let lerpedRadius = lerp(0, maxRadius, this.t);
@@ -26,12 +26,14 @@ class Circle {
   }
   draw(){
     let colorIndex = sliceColors.indexOf(this.color);
-    fill(red(this.color), green(this.color), blue(this.color), 255);
+    let alpha = this.awardedPoint ? 255 : 150; // Decrease alpha if point has been awarded
+    fill(red(this.color), green(this.color), blue(this.color), alpha);
     stroke(255);
     strokeWeight(2);
     circle(this.x, this.y, this.radius * 2);
   }
 }
+ 
  
 function lerp(start, end, amt) {
   return (1 - amt) * start + amt * end;
@@ -42,7 +44,16 @@ function setup() {
   noFill();
  
   // Call the spawnBall function every 0.5 seconds
-  setInterval(spawnBall, 500);
+  setInterval(spawnBall, 250);
+
+  //Server setup for Max DSP
+  client = new Client();
+  client.startClient('127.0.0.1', 9000);
+  server = new Server();
+  server.startServer(9001);
+  server.getMessage(function(address,msg) {
+    oscReceiver(address,msg);
+  });
 }
  
 function updateCircles() {
@@ -99,17 +110,12 @@ function draw() {
   for (let i = 0; i < 5; i++) {
     let startAngle = -PI / 2 + sliceAngle * i;
     let endAngle = startAngle + sliceAngle;
+ 
     let hovered = isHovered(startAngle, endAngle, i);
     if (hovered) {
-      hoveredSliceIndex = i;
-      break;
+        hoveredSliceIndex = i;
     }
-  }
  
-  for (let i = 0; i < 5; i++) {
-    let startAngle = -PI / 2 + sliceAngle * i;
-   
-    let endAngle = startAngle + sliceAngle;
     let opacity = (i === hoveredSliceIndex) ? 128 : 255;
     let color = sliceColors[i];
     fill(red(color), green(color), blue(color), opacity);
@@ -119,7 +125,7 @@ function draw() {
     let middleAngle = (startAngle + endAngle) / 2;
     let middleX = width / 2 + (300 * cos(middleAngle));
     let middleY = height / 2 + (300 * sin(middleAngle));
-   
+ 
     // Display the slice index in the middle of the slice
     fill(255);
     textSize(20);
@@ -147,41 +153,40 @@ function draw() {
  
   // Display points counter
   fill(255);
-  textSize(20);
+  textSize(80);
   textAlign(LEFT, TOP);
-  text('Points: ' + points, 10, 10);
+  text('Points: ', 30, 30)
+  text(points, 120, 120);
 }
  
 function keyPressed() {
   if (key === ' ') {
-
-    if (key === ' ') {
-      console.log("Hovered Slice Index:", hoveredSliceIndex);
-      // Iterate through the balls to find the one that matches the current slice and color
+    console.log("Hovered Slice Index:", hoveredSliceIndex);
+    // Iterate through the balls to find the one that matches the current slice and color
+    for (let i = 0; i < arrayCircles.length; i++) {
+      let ball = arrayCircles[i];
+      // Check if the ball has already been awarded a point or is still in the middle hole
+      if (ball.awardedPoint || dist(ball.x, ball.y, width / 2, height / 2) < 100) {
+        continue; // Skip this ball if it has already awarded a point or is in the middle hole
+      }
+      // Calculate the angle of the ball relative to the center
+      let ballAngle = atan2(ball.y - height / 2, ball.x - width / 2);
+      // Adjust the angle range of the highlighted slice
       let startAngle = (TWO_PI / 5 * hoveredSliceIndex - PI / 2 + TWO_PI) % TWO_PI;
       // Normalize the ball angle to ensure it's within the range [0, TWO_PI)
-
-      for (let i = 0; i < arrayCircles.length; i++) {
-        let ball = arrayCircles[i];
-        // Check if the ball has already been awarded a point or is still in the middle hole
-        if (ball.awardedPoint || dist(ball.x, ball.y, width / 2, height / 2) < 100) {
-          continue; // Skip this ball if it has already awarded a point or is in the middle hole
-        }
-        // Calculate the angle of the ball relative to the center
-        let ballAngle = atan2(ball.y - height / 2, ball.x - width / 2);
-        // Adjust the angle range of the highlighted slice
-        ballAngle = (ballAngle + TWO_PI) % TWO_PI;
-        // Calculate the slice index of the ball
-        let ballSliceIndex = floor((ballAngle + PI / 2) / (TWO_PI / 5)) % 5;
-        // Check if the ball's slice index matches the hovered slice index and if its color matches
-        if (ballSliceIndex === hoveredSliceIndex && ball.color === sliceColors[hoveredSliceIndex]) {
-          points++; // Increment points if the correct ball is in the correct slice
-          console.log("Point awarded because of slice:", hoveredSliceIndex);
-          // Set the awardedPoint property to true to indicate that this ball has awarded a point
-          ball.awardedPoint = true;
-          break; // Break loop after awarding the point
-        }
+      ballAngle = (ballAngle + TWO_PI) % TWO_PI;
+      // Calculate the slice index of the ball
+      let ballSliceIndex = floor((ballAngle + PI / 2) / (TWO_PI / 5)) % 5;
+      // Check if the ball's slice index matches the hovered slice index and if its color matches
+      if (ballSliceIndex === hoveredSliceIndex && ball.color === sliceColors[hoveredSliceIndex]) {
+        points++; // Increment points if the correct ball is in the correct slice
+        console.log("Point awarded because of slice:", hoveredSliceIndex);
+        // Set the awardedPoint property to true to indicate that this ball has awarded a point
+        ball.awardedPoint = true;
+        client.sendMessage("/right", hoveredSliceIndex);
+        return; // Break loop after awarding the point
       }
     }
+    client.sendMessage("/false", "bang");
   }
 }
