@@ -26,7 +26,7 @@ class Circle {
   }
   draw(){
     let colorIndex = sliceColors.indexOf(this.color);
-    let alpha = this.awardedPoint ? 255 : 150; // Decrease alpha if point has been awarded
+    let alpha = this.awardedPoint ? 128 : 255; // Decrease alpha if point has been awarded
     fill(red(this.color), green(this.color), blue(this.color), alpha);
     stroke(255);
     strokeWeight(2);
