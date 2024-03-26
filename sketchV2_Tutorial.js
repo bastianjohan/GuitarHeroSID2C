@@ -73,7 +73,6 @@ class Circle {
   }
 }
  
- 
 function lerp(start, end, amt) {
   return (1 - amt) * start + amt * end;
 }
@@ -81,6 +80,8 @@ function lerp(start, end, amt) {
 function setup() {
   createCanvas(windowWidth, windowHeight);
   noFill();
+  textFont("Goldman");
+  noCursor();
  
   // Call the spawnBall function every 0.5 seconds
   setInterval(spawnBall, 500);
@@ -156,11 +157,9 @@ function isHovered(startAngle, endAngle, sliceIndex) {
  
   return hovered;
 }
- 
-function draw() {
-  fps = frameRate();
+
+function game() {
   updateCircles();
-  background(0);
  
   let sliceAngle = TWO_PI / sliceCount;
   textSize(20);
@@ -263,13 +262,21 @@ function draw() {
   fill(255);
   noStroke();
   circle(mouseX, mouseY, 10);
+}
  
+function draw() {
+  fps = frameRate();
+  background(0);
+  game();
   // Display points counter
   fill(255);
   textSize(20);
   textAlign(LEFT, TOP);
   text('Points: ' + points, 30, 30);
-  text("FPS: " + fps.toFixed(2), innerWidth - 120, 30);
+  text("FPS: " + fps.toFixed(0), innerWidth - 120, 30);
+  text("1", innerWidth / 2, innerHeight / 2 - 120);
+  text("3", innerWidth / 2, innerHeight / 2 - 200);
+  text("1", innerWidth / 2, innerHeight / 2 - 280);
 }
  
 function keyPressed() {
@@ -279,7 +286,7 @@ function keyPressed() {
     for (let i = 0; i < arrayCircles.length; i++) {
       let ball = arrayCircles[i];
       // Check if the ball has already been awarded a point or is still in the middle hole
-      if (ball.awardedPoint || dist(ball.x, ball.y, width / 2, height / 2) < 125) {
+      if (ball.awardedPoint || dist(ball.x, ball.y, width / 2, height / 2) < 70) {
         continue; // Skip this ball if it has already awarded a point or is in the middle hole
       }
       // Calculate the angle of the ball relative to the center
@@ -293,14 +300,15 @@ function keyPressed() {
       // Check if the ball's slice index matches the hovered slice index and if its color matches
       if (ballSliceIndex === hoveredSliceIndex && ball.color === sliceColors[hoveredSliceIndex]) {
         // Increment points if the correct ball is in the correct slice
-        if (ball.t >= 0.5 && ball.t < 0.67) {
+        print(ball.t);
+        if (ball.t >= 0.28 && ball.t < 0.52) {
           points++;
-        } else if (ball.t >= 0.67 && ball.t < 0.83) {
+        } else if (ball.t >= 0.52 && ball.t < 0.76) {
           points += 3;
         } else {
           points++;
         }
-        console.log("Point awarded because of slice:", hoveredSliceIndex);
+        //console.log("Point awarded because of slice:", hoveredSliceIndex);
         // Set the awardedPoint property to true to indicate that this ball has awarded a point
         ball.awardedPoint = true;
         client.sendMessage("/right", hoveredSliceIndex);
