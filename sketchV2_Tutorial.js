@@ -9,6 +9,8 @@ let points = 0; // Variable to keep track of points
 let hoveredSliceIndex = -1; // Index of the currently hovered slice
 let sliceCount = 7;
 let fps = 30;
+let accuracy = 100;
+let hits = 0;
 
 function drawSymbolCircle(x, y){
   fill(0, 0, 0, 0);
@@ -47,7 +49,7 @@ function drawSymbolTriangleBottomStripe(x, y){
 }
  
 class Circle {
-  constructor(t, a, r, c, sliceIndex){
+  constructor(t, a, r, c, sliceIndex, dB){
     this.t = t;
     this.angle = a;
     this.radius = r;
@@ -56,6 +58,7 @@ class Circle {
     this.x = 0;
     this.y = 0;
     this.awardedPoint = false;
+    this.isDistractionBall = dB;
   }
   update(cX, cY){
     let lerpedRadius = lerp(0, maxRadius, this.t);
@@ -101,6 +104,9 @@ function updateCircles() {
     let obj = arrayCircles[i];
     obj.update(width / 2, height / 2);
     if (obj.t >= 1) {
+      if(!obj.awardedPoint && points > 0 && !obj.isDistractionBall){
+        points -= 2;
+      }
       arrayCircles.splice(i, 1);
     }
   }
@@ -112,6 +118,7 @@ function spawnBall() {
   let colorIndex = Math.round(random(0, sliceCount - 1));
   let color;
   let sliceIndex;
+  let isDistractionBall = false;
   randomDistraction = Math.floor(random(5));
   if(randomDistraction == 0){
     let randomColor = -1;
@@ -120,6 +127,7 @@ function spawnBall() {
     }
     color = sliceColors[randomColor];
     sliceIndex = sliceColorIndexes[randomColor];
+    isDistractionBall = true;
   } else {
     color = sliceColors[colorIndex];
     sliceIndex = sliceColorIndexes[colorIndex];
@@ -129,7 +137,7 @@ function spawnBall() {
   angleEnd = angleStart + TWO_PI / sliceCount;
   angle = random(angleStart + TWO_PI / 70, angleEnd - TWO_PI / 70);
   //Spawn
-  arrayCircles.push(new Circle(0, angle, 25, color, sliceIndex));
+  arrayCircles.push(new Circle(0, angle, 25, color, sliceIndex, isDistractionBall));
 }
  
 function isHovered(startAngle, endAngle, sliceIndex) {
@@ -268,11 +276,13 @@ function draw() {
   fps = frameRate();
   background(0);
   game();
+  accuracy = points / hits * (100/3);
   // Display points counter
   fill(255);
   textSize(20);
   textAlign(LEFT, TOP);
   text('Points: ' + points, 30, 30);
+  text('Accuracy: ' + accuracy.toFixed(1) + "%", 30, 50);
   text("FPS: " + fps.toFixed(0), innerWidth - 120, 30);
   text("1", innerWidth / 2, innerHeight / 2 - 120);
   text("3", innerWidth / 2, innerHeight / 2 - 200);
@@ -281,6 +291,7 @@ function draw() {
  
 function keyPressed() {
   if (key === ' ') {
+    hits++;
     console.log("Hovered Slice Index:", hoveredSliceIndex);
     // Iterate through the balls to find the one that matches the current slice and color
     for (let i = 0; i < arrayCircles.length; i++) {
