@@ -87,7 +87,7 @@ function setup() {
   noCursor();
  
   // Call the spawnBall function every 0.5 seconds
-  setInterval(spawnBall, 500);
+  //setInterval(spawnBall, 500);
 
   //Server setup for Max DSP
   client = new Client();
@@ -97,6 +97,19 @@ function setup() {
   server.getMessage(function(address,msg) {
     oscReceiver(address,msg);
   });
+}
+
+let toggleSpawn = false;
+
+function oscReceiver(address, value) {
+  if (address === "/heartlive") {
+    if(value == 1 && !toggleSpawn){
+      toggleSpawn = !toggleSpawn;
+      spawnBall();
+    } else if(value == 0 && toggleSpawn){
+      toggleSpawn = !toggleSpawn;
+    }
+  }
 }
  
 function updateCircles() {
